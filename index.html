@@ -1,1 +1,487 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Panel 5S — Almacén</title>
+<style>
+  :root{
+    --scooter:#43CADB;
+    --purple:#8660E7;
+    --windsor:#440885;
+    --marguerite:#726ECD;
+    --governor:#382CCE;
+    --bg:#F4F2FB;
+    --card:#FFFFFF;
+    --text:#2B1A4A;
+    --ok:#2FBF8F;
+    --warn:#E8A93C;
+    --bad:#DD5C6E;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:'Segoe UI', Arial, sans-serif;
+    background:var(--bg);
+    color:var(--text);
+  }
+  header{
+    background:linear-gradient(135deg, var(--windsor), var(--governor));
+    color:#fff;
+    padding:26px 20px 20px;
+    text-align:center;
+  }
+  header h1{margin:0 0 4px;font-size:1.5rem;}
+  header p{margin:0;color:#D9D0F5;font-size:.92rem;}
+  .tabs{
+    display:flex;
+    gap:6px;
+    max-width:720px;
+    margin:16px auto 0;
+    padding:0 14px;
+    overflow-x:auto;
+  }
+  .tab-btn{
+    flex:1;
+    white-space:nowrap;
+    padding:9px 10px;
+    border:2px solid var(--windsor);
+    background:#fff;
+    color:var(--windsor);
+    border-radius:10px;
+    font-size:.82rem;
+    font-weight:700;
+    cursor:pointer;
+  }
+  .tab-btn.active{background:var(--windsor);color:#fff;}
+  main{max-width:720px;margin:0 auto;padding:18px 14px 60px;}
+  .card{
+    background:var(--card);
+    border-radius:14px;
+    padding:18px;
+    margin-bottom:16px;
+    box-shadow:0 2px 10px rgba(68,8,133,.08);
+  }
+  label{
+    display:block;font-size:.78rem;font-weight:700;color:var(--marguerite);
+    margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px;
+  }
+  select{
+    width:100%;padding:10px 12px;border:1.5px solid #DED6F7;border-radius:8px;
+    font-size:.95rem;color:var(--text);background:var(--bg);
+  }
+  .row{display:flex;gap:10px;flex-wrap:wrap;}
+  .row > div{flex:1;min-width:140px;}
+  h2.section-title{font-size:1rem;margin:0 0 12px;color:var(--windsor);}
+  .kpi-big{display:flex;align-items:center;gap:18px;margin-bottom:8px;}
+  .ring{
+    width:92px;height:92px;border-radius:50%;flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;
+    font-weight:800;font-size:1.1rem;color:var(--windsor);
+    background:conic-gradient(var(--goal-color,var(--governor)) calc(var(--pct,0)*1%), #EAE5FB 0);
+    position:relative;
+  }
+  .ring::before{content:'';position:absolute;width:68px;height:68px;border-radius:50%;background:#fff;}
+  .ring span{position:relative;}
+  .kpi-text .num{font-size:1.3rem;font-weight:800;}
+  .kpi-text .lbl{font-size:.82rem;color:var(--marguerite);}
+  .badge{
+    display:inline-block;padding:3px 10px;border-radius:20px;font-size:.72rem;font-weight:800;color:#fff;margin-top:6px;
+  }
+  .pilares{display:flex;flex-direction:column;gap:10px;margin-top:14px;}
+  .pilar-row{display:flex;align-items:center;gap:10px;}
+  .pilar-nombre{width:118px;font-size:.82rem;font-weight:700;flex-shrink:0;}
+  .barra-bg{flex:1;height:14px;background:#EAE5FB;border-radius:8px;overflow:hidden;position:relative;}
+  .barra-fill{height:100%;border-radius:8px;}
+  .barra-objetivo{
+    position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--windsor);
+  }
+  .pilar-pct{width:46px;text-align:right;font-size:.82rem;font-weight:800;}
+  .legend-mini{display:flex;gap:14px;flex-wrap:wrap;font-size:.72rem;color:var(--marguerite);margin-top:10px;}
+  .legend-mini span{display:flex;align-items:center;gap:5px;}
+  .dot{width:10px;height:10px;border-radius:3px;}
+  table{width:100%;border-collapse:collapse;font-size:.88rem;}
+  th,td{text-align:left;padding:9px 6px;border-bottom:1px solid #EEE9FA;}
+  th{color:var(--marguerite);text-transform:uppercase;font-size:.7rem;letter-spacing:.4px;}
+  .pill{display:inline-block;padding:3px 9px;border-radius:20px;font-size:.72rem;font-weight:800;color:#fff;}
+  .empty{text-align:center;color:var(--marguerite);padding:26px 10px;font-size:.9rem;}
+  .hidden{display:none;}
+  .pda-item{border-left:4px solid var(--marguerite);background:var(--bg);border-radius:8px;padding:12px 14px;margin-bottom:10px;}
+  .pda-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;}
+  .pda-zona{font-weight:800;font-size:.85rem;color:var(--windsor);}
+  .pda-s{font-size:.7rem;font-weight:700;color:#fff;background:var(--governor);padding:2px 8px;border-radius:10px;}
+  .pda-accion{font-size:.87rem;margin:4px 0;}
+  .pda-meta{font-size:.76rem;color:var(--marguerite);display:flex;justify-content:space-between;}
+  footer{text-align:center;color:var(--marguerite);font-size:.72rem;padding:10px 16px 30px;}
+</style>
+</head>
+<body>
 
+<header>
+  <h1>Panel 5S · Almacén</h1>
+  <p>Organización · Orden · Limpieza · Estandarización · Disciplina</p>
+</header>
+
+<div class="tabs">
+  <button class="tab-btn active" data-tab="general">General</button>
+  <button class="tab-btn" data-tab="zona">Por zona</button>
+  <button class="tab-btn" data-tab="ranking">Ranking</button>
+  <button class="tab-btn" data-tab="pda">Plan de acción</button>
+</div>
+
+<main>
+
+  <!-- GENERAL -->
+  <section id="tab-general">
+    <div class="card">
+      <div class="row">
+        <div>
+          <label for="mesGeneral">Mes</label>
+          <select id="mesGeneral"></select>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <h2 class="section-title">Cumplimiento general 5S</h2>
+      <div class="kpi-big">
+        <div class="ring" id="ringGeneral" style="--pct:0"><span id="ringGeneralText">0%</span></div>
+        <div class="kpi-text">
+          <div class="num" id="textoGeneral">0%</div>
+          <div class="lbl">promedio de todas las auditorías del mes, objetivo 80%</div>
+          <div class="badge" id="badgeGeneral">-</div>
+        </div>
+      </div>
+      <div class="pilares" id="pilaresGeneral"></div>
+      <div class="legend-mini">
+        <span><i class="dot" style="background:var(--governor)"></i>% alcanzado</span>
+        <span><i class="dot" style="background:var(--windsor)"></i>Objetivo 80%</span>
+      </div>
+    </div>
+    <div class="card">
+      <h2 class="section-title">Evolución mensual</h2>
+      <div id="evolucionChart"></div>
+    </div>
+  </section>
+
+  <!-- POR ZONA -->
+  <section id="tab-zona" class="hidden">
+    <div class="card">
+      <div class="row">
+        <div>
+          <label for="zonaSelect">Zona</label>
+          <select id="zonaSelect"></select>
+        </div>
+        <div>
+          <label for="mesZona">Mes</label>
+          <select id="mesZona"></select>
+        </div>
+      </div>
+    </div>
+    <div class="card" id="zonaCard">
+      <div class="empty" id="zonaEmpty">Elegí una zona.</div>
+      <div id="zonaContent" class="hidden">
+        <div style="margin-bottom:10px;font-size:.85rem;color:var(--marguerite);">Responsable: <strong id="zonaResponsable" style="color:var(--windsor)"></strong></div>
+        <div class="kpi-big">
+          <div class="ring" id="ringZona" style="--pct:0"><span id="ringZonaText">0%</span></div>
+          <div class="kpi-text">
+            <div class="num" id="textoZona">0%</div>
+            <div class="lbl">promedio de la zona este mes vs objetivo 80%</div>
+            <div class="badge" id="badgeZona">-</div>
+          </div>
+        </div>
+        <div class="pilares" id="pilaresZona"></div>
+      </div>
+    </div>
+    <div class="card">
+      <h2 class="section-title">Evolución de la zona</h2>
+      <div id="evolucionZonaChart"></div>
+    </div>
+  </section>
+
+  <!-- RANKING -->
+  <section id="tab-ranking" class="hidden">
+    <div class="card">
+      <label for="mesRanking">Mes</label>
+      <select id="mesRanking"></select>
+    </div>
+    <div class="card">
+      <table>
+        <thead><tr><th>Zona</th><th>Responsable</th><th>% General</th></tr></thead>
+        <tbody id="rankingBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- PDA -->
+  <section id="tab-pda" class="hidden">
+    <div class="card">
+      <div class="row">
+        <div>
+          <label for="pdaZonaFiltro">Zona</label>
+          <select id="pdaZonaFiltro"><option value="">Todas</option></select>
+        </div>
+        <div>
+          <label for="pdaEstadoFiltro">Estado</label>
+          <select id="pdaEstadoFiltro">
+            <option value="">Todos</option>
+            <option value="hecho">Hecho</option>
+            <option value="proceso">En proceso</option>
+            <option value="pendiente">Pendiente</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div id="pdaList"></div>
+  </section>
+
+</main>
+
+<footer>Datos actualizados automáticamente desde la planilla de auditorías 5S.<br><span id="fuenteDatos"></span></footer>
+
+<script>
+/* ================= CONFIGURACIÓN ================= */
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwOpLpPayn_YggQjmgZBvHPIKJprU16sonCykw_4Q_rWIHu-waiw8_CMOa2lWGOzg/exec";
+const DEMO_DATA = {"generatedAt": "2026-09-13T22:54:29.076Z", "objetivoPct": 80, "maxPuntos": {"ORGANIZACION": 28, "ORDEN": 24, "LIMPIEZA": 20, "ESTANDARIZACION": 20, "DISCIPLINA": 24}, "maxTotal": 116, "zonas": [{"zona": "Zona 1", "responsable": "Maximiliano Heredia"}, {"zona": "Zona 2", "responsable": "Emanuel Catalán"}, {"zona": "Zona 3", "responsable": "Federico Schnap"}, {"zona": "Zona 4", "responsable": "Gabriel Cappiello"}, {"zona": "Zona 5", "responsable": "Distefano"}], "auditorias": [{"fecha": "2025-04-16", "auditor": "Herrera Walter", "zona": "", "organizacion": 23, "orden": 18, "limpieza": 13, "estandarizacion": 10, "disciplina": 18, "total": 82, "pctGeneral": 70.7, "pctOrganizacion": 82.1, "pctOrden": 75, "pctLimpieza": 65, "pctEstandarizacion": 50, "pctDisciplina": 75}, {"fecha": "2025-05-13", "auditor": "Herrera Walter", "zona": "", "organizacion": 25, "orden": 21, "limpieza": 13, "estandarizacion": 15, "disciplina": 17, "total": 91, "pctGeneral": 78.4, "pctOrganizacion": 89.3, "pctOrden": 87.5, "pctLimpieza": 65, "pctEstandarizacion": 75, "pctDisciplina": 70.8}, {"fecha": "2025-06-23", "auditor": "Pablo Bellesi", "zona": "", "organizacion": 20, "orden": 20, "limpieza": 17, "estandarizacion": 16, "disciplina": 8, "total": 81, "pctGeneral": 69.8, "pctOrganizacion": 71.4, "pctOrden": 83.3, "pctLimpieza": 85, "pctEstandarizacion": 80, "pctDisciplina": 33.3}, {"fecha": "2025-07-16", "auditor": "Martin Milagros", "zona": "", "organizacion": 22, "orden": 20, "limpieza": 13, "estandarizacion": 13, "disciplina": 16, "total": 84, "pctGeneral": 72.4, "pctOrganizacion": 78.6, "pctOrden": 83.3, "pctLimpieza": 65, "pctEstandarizacion": 65, "pctDisciplina": 66.7}, {"fecha": "2025-10-16", "auditor": "", "zona": "Zona 1", "organizacion": 3, "orden": 19, "limpieza": 10, "estandarizacion": 10, "disciplina": 17, "total": 59, "pctGeneral": 50.9, "pctOrganizacion": 10.7, "pctOrden": 79.2, "pctLimpieza": 50, "pctEstandarizacion": 50, "pctDisciplina": 70.8}, {"fecha": "2026-03-20", "auditor": "", "zona": "Zona 1", "organizacion": 16, "orden": 22, "limpieza": 15, "estandarizacion": 16, "disciplina": 22, "total": 91, "pctGeneral": 78.4, "pctOrganizacion": 57.1, "pctOrden": 91.7, "pctLimpieza": 75, "pctEstandarizacion": 80, "pctDisciplina": 91.7}, {"fecha": "2026-03-20", "auditor": "", "zona": "Zona 2", "organizacion": 28, "orden": 24, "limpieza": 17, "estandarizacion": 15, "disciplina": 22, "total": 106, "pctGeneral": 91.4, "pctOrganizacion": 100, "pctOrden": 100, "pctLimpieza": 85, "pctEstandarizacion": 75, "pctDisciplina": 91.7}, {"fecha": "2026-03-20", "auditor": "", "zona": "Zona 3", "organizacion": 14, "orden": 24, "limpieza": 16, "estandarizacion": 18, "disciplina": 21, "total": 93, "pctGeneral": 80.2, "pctOrganizacion": 50, "pctOrden": 100, "pctLimpieza": 80, "pctEstandarizacion": 90, "pctDisciplina": 87.5}, {"fecha": "2026-03-20", "auditor": "", "zona": "Zona 4", "organizacion": 26, "orden": 24, "limpieza": 16, "estandarizacion": 18, "disciplina": 22, "total": 106, "pctGeneral": 91.4, "pctOrganizacion": 92.9, "pctOrden": 100, "pctLimpieza": 80, "pctEstandarizacion": 90, "pctDisciplina": 91.7}, {"fecha": "2026-03-20", "auditor": "", "zona": "Zona 5", "organizacion": 24, "orden": 24, "limpieza": 17, "estandarizacion": 19, "disciplina": 22, "total": 106, "pctGeneral": 91.4, "pctOrganizacion": 85.7, "pctOrden": 100, "pctLimpieza": 85, "pctEstandarizacion": 95, "pctDisciplina": 91.7}, {"fecha": "2026-09-01", "auditor": "", "zona": "Zona 1", "organizacion": 20, "orden": 13, "limpieza": 14, "estandarizacion": 15, "disciplina": 19, "total": 81, "pctGeneral": 69.8, "pctOrganizacion": 71.4, "pctOrden": 54.2, "pctLimpieza": 70, "pctEstandarizacion": 75, "pctDisciplina": 79.2}, {"fecha": "2026-09-09", "auditor": "", "zona": "Zona 1", "organizacion": 23, "orden": 23, "limpieza": 15, "estandarizacion": 19, "disciplina": 22, "total": 102, "pctGeneral": 87.9, "pctOrganizacion": 82.1, "pctOrden": 95.8, "pctLimpieza": 75, "pctEstandarizacion": 95, "pctDisciplina": 91.7}, {"fecha": "2026-09-10", "auditor": "", "zona": "Zona 2", "organizacion": 23, "orden": 19, "limpieza": 14, "estandarizacion": 15, "disciplina": 20, "total": 91, "pctGeneral": 78.4, "pctOrganizacion": 82.1, "pctOrden": 79.2, "pctLimpieza": 70, "pctEstandarizacion": 75, "pctDisciplina": 83.3}, {"fecha": "2026-09-10", "auditor": "", "zona": "Zona 3", "organizacion": 26, "orden": 21, "limpieza": 14, "estandarizacion": 15, "disciplina": 19, "total": 95, "pctGeneral": 81.9, "pctOrganizacion": 92.9, "pctOrden": 87.5, "pctLimpieza": 70, "pctEstandarizacion": 75, "pctDisciplina": 79.2}, {"fecha": "2026-09-11", "auditor": "", "zona": "Zona 5", "organizacion": 23, "orden": 18, "limpieza": 15, "estandarizacion": 16, "disciplina": 18, "total": 90, "pctGeneral": 77.6, "pctOrganizacion": 82.1, "pctOrden": 75, "pctLimpieza": 75, "pctEstandarizacion": 80, "pctDisciplina": 75}, {"fecha": "2026-09-11", "auditor": "", "zona": "Zona 4", "organizacion": 23, "orden": 18, "limpieza": 15, "estandarizacion": 16, "disciplina": 18, "total": 90, "pctGeneral": 77.6, "pctOrganizacion": 82.1, "pctOrden": 75, "pctLimpieza": 75, "pctEstandarizacion": 80, "pctDisciplina": 75}], "pda": [{"zona": "Zona 1", "accion": "7% por debajo del objetivo. Plasmar evidencia y realizar capacitacion y entrenamiento de 5s a operario. ", "s": "ORGANIZAR", "responsable": "Maximiliano Heredia ", "status": "hecho", "fecha": "2026-04-01", "evidencia": "C:\\Users\\PC\\Downloads\\DPO MILI\\d2fe4f95-10a1-4c8d-a85b-c7bfaaa116b5.jfif"}, {"zona": "Zona 2", "accion": "crear instructivos visuales sobre como se debe ver una zona limpia y estandarizada", "s": "ESTANDARIZAR", "responsable": "Emanuel Catalan", "status": "hecho", "fecha": "2026-04-02", "evidencia": "C:\\Users\\PC\\Pictures\\11f07062-5290-4f20-9380-9d26394795e4.jfif"}, {"zona": "Zona 3", "accion": "Implementar ranking de 5s x sectores. Aplicar incentivo", "s": "ORGANIZAR", "responsable": "Federico Schnap", "status": "proceso", "fecha": "2026-04-10", "evidencia": "C:\\Users\\PC\\Pictures\\pda.png"}, {"zona": "Zona 4", "accion": "implementar rutina diaria de limpieza y verificar cumplimiento del mismo durante el dia", "s": "LIMPIAR", "responsable": "Gabriel Cappiello", "status": "hecho", "fecha": "2026-04-10", "evidencia": "C:\\Users\\PC\\Downloads\\DPO MILI\\Plan semanal de operaciones detallado (1).png"}]};
+
+let DATA = { zonas: [], auditorias: [], pda: [], objetivoPct: 80, maxPuntos: {}, maxTotal: 116 };
+let FUENTE = 'demo';
+
+const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const PILARES = [
+  { key:'organizacion', pct:'pctOrganizacion', label:'Organización', color:'var(--scooter)' },
+  { key:'orden', pct:'pctOrden', label:'Orden', color:'var(--purple)' },
+  { key:'limpieza', pct:'pctLimpieza', label:'Limpieza', color:'var(--marguerite)' },
+  { key:'estandarizacion', pct:'pctEstandarizacion', label:'Estandarización', color:'var(--governor)' },
+  { key:'disciplina', pct:'pctDisciplina', label:'Disciplina', color:'var(--windsor)' }
+];
+
+async function cargarDatos(){
+  if (APPS_SCRIPT_URL) {
+    try {
+      const res = await fetch(APPS_SCRIPT_URL);
+      const json = await res.json();
+      if (!json.error) { DATA = json; FUENTE = 'conectado'; return init(); }
+    } catch (err) { console.warn('Fallback a demo', err); }
+  }
+  DATA = DEMO_DATA;
+  FUENTE = 'demo';
+  init();
+}
+
+function mesesDisponibles(){
+  return Array.from(new Set(DATA.auditorias.map(a => a.fecha.slice(0,7)))).sort();
+}
+
+function labelMes(m){
+  const [y,mm] = m.split('-');
+  return `${MESES[parseInt(mm,10)-1]} ${y}`;
+}
+
+function colorSemaforo(pct){
+  if (pct >= DATA.objetivoPct) return 'var(--ok)';
+  if (pct >= DATA.objetivoPct - 15) return 'var(--warn)';
+  return 'var(--bad)';
+}
+
+function textoBadge(pct){
+  const desvio = Math.round((pct - DATA.objetivoPct)*10)/10;
+  if (desvio >= 0) return `+${desvio} pts sobre el objetivo`;
+  return `${desvio} pts bajo el objetivo`;
+}
+
+function promedio(arr, campo){
+  if (!arr.length) return 0;
+  return Math.round((arr.reduce((s,a)=>s+a[campo],0)/arr.length)*10)/10;
+}
+
+function renderPilares(container, auditoriasFiltradas){
+  const html = PILARES.map(p => {
+    const pct = promedio(auditoriasFiltradas, p.pct);
+    const color = colorSemaforo(pct);
+    return `<div class="pilar-row">
+      <div class="pilar-nombre">${p.label}</div>
+      <div class="barra-bg">
+        <div class="barra-fill" style="width:${pct}%;background:${color}"></div>
+        <div class="barra-objetivo" style="left:${DATA.objetivoPct}%"></div>
+      </div>
+      <div class="pilar-pct">${pct}%</div>
+    </div>`;
+  }).join('');
+  document.getElementById(container).innerHTML = html;
+}
+
+/* ---------- GENERAL ---------- */
+function poblarMeses(){
+  const meses = mesesDisponibles();
+  const opts = meses.map(m => `<option value="${m}">${labelMes(m)}</option>`).join('');
+  ['mesGeneral','mesZona','mesRanking'].forEach(id => {
+    document.getElementById(id).innerHTML = opts;
+    if (meses.length) document.getElementById(id).value = meses[meses.length-1];
+  });
+}
+
+function renderGeneral(){
+  const mes = document.getElementById('mesGeneral').value;
+  const auds = DATA.auditorias.filter(a => a.fecha.startsWith(mes));
+  const pct = promedio(auds, 'pctGeneral');
+  const color = colorSemaforo(pct);
+  document.getElementById('ringGeneral').style.setProperty('--pct', pct);
+  document.getElementById('ringGeneral').style.setProperty('--goal-color', color);
+  document.getElementById('ringGeneralText').textContent = pct + '%';
+  document.getElementById('textoGeneral').textContent = pct + '% general';
+  const badge = document.getElementById('badgeGeneral');
+  badge.textContent = textoBadge(pct);
+  badge.style.background = color;
+  renderPilares('pilaresGeneral', auds);
+  renderEvolucion('evolucionChart', DATA.auditorias);
+}
+
+function renderEvolucion(containerId, auditorias){
+  const meses = mesesDisponibles();
+  const puntos = meses.map(m => {
+    const auds = auditorias.filter(a => a.fecha.startsWith(m));
+    return promedio(auds, 'pctGeneral');
+  });
+  const w = 600, h = 160, pad = 30;
+  const maxY = 100;
+  const stepX = meses.length > 1 ? (w - pad*2) / (meses.length - 1) : 0;
+  const pts = puntos.map((v,i) => {
+    const x = pad + stepX*i;
+    const y = h - pad - (v/maxY)*(h - pad*2);
+    return [x,y];
+  });
+  const path = pts.map((p,i) => (i===0?'M':'L') + p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ');
+  const objetivoY = h - pad - (DATA.objetivoPct/maxY)*(h - pad*2);
+  const circles = pts.map((p,i) => `<circle cx="${p[0]}" cy="${p[1]}" r="4" fill="var(--governor)"><title>${labelMes(meses[i])}: ${puntos[i]}%</title></circle>`).join('');
+  const labels = meses.map((m,i) => `<text x="${pts[i][0]}" y="${h-8}" font-size="9" text-anchor="middle" fill="var(--marguerite)">${m.slice(5)}</text>`).join('');
+  document.getElementById(containerId).innerHTML = `
+    <svg viewBox="0 0 ${w} ${h}" style="width:100%;height:auto;">
+      <line x1="${pad}" y1="${objetivoY}" x2="${w-pad}" y2="${objetivoY}" stroke="var(--windsor)" stroke-width="1.5" stroke-dasharray="4,4"/>
+      <text x="${w-pad}" y="${objetivoY-6}" font-size="9" text-anchor="end" fill="var(--windsor)">Objetivo ${DATA.objetivoPct}%</text>
+      <path d="${path}" fill="none" stroke="var(--governor)" stroke-width="2.5"/>
+      ${circles}
+      ${labels}
+    </svg>`;
+}
+
+/* ---------- POR ZONA ---------- */
+function poblarZonas(){
+  const opts = DATA.zonas.map(z => `<option value="${z.zona}">${z.zona}</option>`).join('');
+  document.getElementById('zonaSelect').innerHTML = '<option value="">Elegí una zona...</option>' + opts;
+  document.getElementById('pdaZonaFiltro').innerHTML = '<option value="">Todas</option>' + opts;
+}
+
+function renderZona(){
+  const zona = document.getElementById('zonaSelect').value;
+  const mes = document.getElementById('mesZona').value;
+  const empty = document.getElementById('zonaEmpty');
+  const content = document.getElementById('zonaContent');
+  if (!zona){
+    empty.classList.remove('hidden'); content.classList.add('hidden');
+    empty.textContent = 'Elegí una zona.';
+    document.getElementById('evolucionZonaChart').innerHTML = '';
+    return;
+  }
+  empty.classList.add('hidden'); content.classList.remove('hidden');
+
+  const info = DATA.zonas.find(z => z.zona === zona);
+  document.getElementById('zonaResponsable').textContent = info ? info.responsable : '—';
+
+  const auds = DATA.auditorias.filter(a => a.zona === zona && a.fecha.startsWith(mes));
+  const pct = promedio(auds, 'pctGeneral');
+  const color = colorSemaforo(pct);
+  document.getElementById('ringZona').style.setProperty('--pct', pct);
+  document.getElementById('ringZona').style.setProperty('--goal-color', color);
+  document.getElementById('ringZonaText').textContent = pct + '%';
+  document.getElementById('textoZona').textContent = pct + '% en ' + zona;
+  const badge = document.getElementById('badgeZona');
+  badge.textContent = auds.length ? textoBadge(pct) : 'Sin auditorías este mes';
+  badge.style.background = auds.length ? color : 'var(--marguerite)';
+  renderPilares('pilaresZona', auds);
+
+  const audsZona = DATA.auditorias.filter(a => a.zona === zona);
+  renderEvolucion('evolucionZonaChart', audsZona);
+}
+
+/* ---------- RANKING ---------- */
+function renderRanking(){
+  const mes = document.getElementById('mesRanking').value;
+  const filas = DATA.zonas.map(z => {
+    const auds = DATA.auditorias.filter(a => a.zona === z.zona && a.fecha.startsWith(mes));
+    const pct = promedio(auds, 'pctGeneral');
+    return Object.assign({}, z, { pct: pct, tieneDatos: auds.length > 0 });
+  }).sort((a,b) => b.pct - a.pct);
+
+  document.getElementById('rankingBody').innerHTML = filas.map(f => `
+    <tr>
+      <td>${f.zona}</td>
+      <td>${f.responsable}</td>
+      <td>${f.tieneDatos ? `<span class="pill" style="background:${colorSemaforo(f.pct)}">${f.pct}%</span>` : '<span style="color:var(--marguerite);font-size:.8rem">Sin datos</span>'}</td>
+    </tr>`).join('');
+}
+
+/* ---------- PDA ---------- */
+const ESTADO_COLOR = { hecho:'var(--ok)', proceso:'var(--warn)', pendiente:'var(--bad)' };
+const ESTADO_LABEL = { hecho:'Hecho', proceso:'En proceso', pendiente:'Pendiente' };
+
+function renderPda(){
+  const zona = document.getElementById('pdaZonaFiltro').value;
+  const estado = document.getElementById('pdaEstadoFiltro').value;
+  const items = DATA.pda.filter(p => (!zona || p.zona === zona) && (!estado || p.status === estado));
+  if (!items.length){
+    document.getElementById('pdaList').innerHTML = '<div class="card"><div class="empty">No hay acciones para este filtro.</div></div>';
+    return;
+  }
+  document.getElementById('pdaList').innerHTML = items.map(p => `
+    <div class="pda-item" style="border-left-color:${ESTADO_COLOR[p.status] || 'var(--marguerite)'}">
+      <div class="pda-top">
+        <span class="pda-zona">${p.zona}</span>
+        <span class="pda-s">${p.s || ''}</span>
+      </div>
+      <div class="pda-accion">${p.accion}</div>
+      <div class="pda-meta">
+        <span>${p.responsable || ''}</span>
+        <span style="color:${ESTADO_COLOR[p.status] || 'var(--marguerite)'};font-weight:700">${ESTADO_LABEL[p.status] || p.status}</span>
+      </div>
+    </div>`).join('');
+}
+
+/* ---------- TABS + INIT ---------- */
+function initTabs(){
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      ['general','zona','ranking','pda'].forEach(t => {
+        document.getElementById('tab-'+t).classList.toggle('hidden', t !== btn.dataset.tab);
+      });
+    });
+  });
+}
+
+function init(){
+  poblarMeses();
+  poblarZonas();
+  initTabs();
+
+  document.getElementById('mesGeneral').addEventListener('change', renderGeneral);
+  document.getElementById('zonaSelect').addEventListener('change', renderZona);
+  document.getElementById('mesZona').addEventListener('change', renderZona);
+  document.getElementById('mesRanking').addEventListener('change', renderRanking);
+  document.getElementById('pdaZonaFiltro').addEventListener('change', renderPda);
+  document.getElementById('pdaEstadoFiltro').addEventListener('change', renderPda);
+
+  renderGeneral();
+  renderZona();
+  renderRanking();
+  renderPda();
+
+  document.getElementById('fuenteDatos').textContent = FUENTE === 'conectado'
+    ? '🟢 Datos conectados en vivo a la planilla.'
+    : '🟡 Mostrando datos de ejemplo (no se pudo conectar a la planilla todavía).';
+}
+
+cargarDatos();
+</script>
+</body>
+</html>
