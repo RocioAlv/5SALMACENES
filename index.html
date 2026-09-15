@@ -30,9 +30,23 @@
     color:#fff;
     padding:26px 20px 20px;
     text-align:center;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:12px;
   }
   header h1{margin:0 0 4px;font-size:1.5rem;}
   header p{margin:0;color:#D9D0F5;font-size:.92rem;}
+  .btn-actualizar{
+    background:#fff;color:var(--windsor);border:none;padding:10px 20px;border-radius:20px;
+    font-weight:800;font-size:.82rem;cursor:pointer;display:inline-flex;align-items:center;gap:7px;
+    box-shadow:0 2px 8px rgba(0,0,0,.15);
+  }
+  .btn-actualizar:hover{background:#F1EBFF;}
+  .btn-actualizar:disabled{opacity:.65;cursor:default;}
+  .btn-actualizar .ico{display:inline-block;transition:transform .5s ease;}
+  .btn-actualizar.girando .ico{animation:girar .8s linear infinite;}
+  @keyframes girar{ to{ transform:rotate(360deg); } }
   .tabs{
     display:flex;
     gap:6px;
@@ -126,6 +140,9 @@
 <header>
   <h1>Panel 5S · Almacén</h1>
   <p>Organización · Orden · Limpieza · Estandarización · Disciplina</p>
+  <button class="btn-actualizar" id="btnActualizar" onclick="actualizarAhora()">
+    <span class="ico">⟳</span> Actualizar ahora
+  </button>
 </header>
 
 <div class="tabs">
@@ -262,17 +279,91 @@ const PILARES = [
   { key:'disciplina', pct:'pctDisciplina', label:'Disciplina', color:'var(--windsor)' }
 ];
 
-async function cargarDatos(){
-  if (APPS_SCRIPT_URL) {
-    try {
-      const res = await fetch(APPS_SCRIPT_URL);
-      const json = await res.json();
-      if (!json.error) { DATA = json; FUENTE = 'conectado'; return init(); }
-    } catch (err) { console.warn('Fallback a demo', err); }
+/**
+ * Pide los datos al Apps Script. Le agrega un parámetro de fecha/hora a la
+ * URL y "cache: no-store" a propósito, para que ni el navegador ni ningún
+ * proxy intermedio devuelva una respuesta vieja guardada en caché — así el
+ * botón "Actualizar ahora" siempre trae el dato más fresco posible.
+ */
+async function fetchDesdeAppsScript_() {
+  if (!APPS_SCRIPT_URL) return null;
+  try {
+    const sep = APPS_SCRIPT_URL.indexOf('?') > -1 ? '&' : '?';
+    const url = APPS_SCRIPT_URL + sep + 'v=' + Date.now();
+    const res = await fetch(url, { cache: 'no-store' });
+    const json = await res.json();
+    if (json && json.error) {
+      console.warn('El backend respondió con error:', json.error);
+      return null;
+    }
+    return json;
+  } catch (err) {
+    console.warn('No se pudo conectar al Apps Script, uso datos de ejemplo', err);
+    return null;
   }
-  DATA = DEMO_DATA;
-  FUENTE = 'demo';
+}
+
+async function cargarDatos(){
+  const json = await fetchDesdeAppsScript_();
+  if (json) { DATA = json; FUENTE = 'conectado'; }
+  else { DATA = DEMO_DATA; FUENTE = 'demo'; }
   init();
+}
+
+/** Botón "Actualizar ahora": vuelve a pedir los datos y repinta todo, sin perder lo que tenías elegido en los selects. */
+async function actualizarAhora(){
+  const btn = document.getElementById('btnActualizar');
+  btn.disabled = true;
+  btn.classList.add('girando');
+  const textoOriginal = btn.innerHTML;
+  btn.innerHTML = '<span class="ico">⟳</span> Actualizando…';
+
+  const seleccionPrevia = {
+    mesGeneral: document.getElementById('mesGeneral').value,
+    zonaSelect: document.getElementById('zonaSelect').value,
+    mesZona: document.getElementById('mesZona').value,
+    mesRanking: document.getElementById('mesRanking').value,
+    pdaZonaFiltro: document.getElementById('pdaZonaFiltro').value,
+    pdaEstadoFiltro: document.getElementById('pdaEstadoFiltro').value
+  };
+
+  const json = await fetchDesdeAppsScript_();
+  if (json) {
+    DATA = json;
+    FUENTE = 'conectado';
+  } else {
+    FUENTE = 'error';
+  }
+
+  poblarMeses();
+  poblarZonas();
+  Object.keys(seleccionPrevia).forEach(id => restaurarSeleccion_(id, seleccionPrevia[id]));
+
+  renderGeneral();
+  renderZona();
+  renderRanking();
+  renderPda();
+  actualizarTextoFuente_();
+
+  btn.disabled = false;
+  btn.classList.remove('girando');
+  btn.innerHTML = textoOriginal;
+
+  if (!json) alert('No se pudo conectar con la planilla ahora mismo. Se mantienen los últimos datos que sí se pudieron cargar.');
+}
+
+function restaurarSeleccion_(id, valor){
+  const el = document.getElementById(id);
+  if (!el) return;
+  if (valor && Array.from(el.options).some(o => o.value === valor)) el.value = valor;
+}
+
+function actualizarTextoFuente_(){
+  const ahora = new Date().toLocaleTimeString('es-AR', { hour:'2-digit', minute:'2-digit' });
+  const el = document.getElementById('fuenteDatos');
+  if (FUENTE === 'conectado') el.textContent = '🟢 Datos conectados en vivo a la planilla · actualizado ' + ahora + ' hs.';
+  else if (FUENTE === 'error') el.textContent = '🔴 No se pudo actualizar (se mantienen los últimos datos disponibles) · ' + ahora + ' hs.';
+  else el.textContent = '🟡 Mostrando datos de ejemplo (no se pudo conectar a la planilla todavía).';
 }
 
 function mesesDisponibles(){
@@ -507,9 +598,7 @@ function init(){
   renderRanking();
   renderPda();
 
-  document.getElementById('fuenteDatos').textContent = FUENTE === 'conectado'
-    ? '🟢 Datos conectados en vivo a la planilla.'
-    : '🟡 Mostrando datos de ejemplo (no se pudo conectar a la planilla todavía).';
+  actualizarTextoFuente_();
 }
 
 cargarDatos();
